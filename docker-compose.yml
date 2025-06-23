@@ -1,0 +1,51 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: mysql_meteostation
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: mydatabase
+      MYSQL_USER: myuser
+      MYSQL_PASSWORD: mypassword
+    volumes:
+      - db_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    networks:
+      - my-network
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin_meteostation
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    environment:
+      PMA_HOST: db
+      MYSQL_ROOT_PASSWORD: rootpassword
+    networks:
+      - my-network
+
+  laravel:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: laravel_meteostation
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/var/www/html
+      - /var/www/html/vendor
+    networks:
+      - my-network
+    depends_on:
+      - db
+
+volumes:
+  db_data:
+
+networks:
+  my-network:
+    driver: bridge
