@@ -10,15 +10,21 @@ Route::get('/user', function (Request $request) {
 })->middleware('auth:sanctum');
 
 Route::post('/esp-data', function (Request $request) {
+
+    Log::info('ESP32 data:', $request->all());
+
     $lat = $request->input('lat');
     $lon = $request->input('lon');
+    $temp = $request->input('temp');
+    $pres = $request->input('pres');
+    $humi = $request->input('humi');
 
-    if ($lat && $lon) {
+    if ($lat && $lon && $temp && $pres && $humi) {
         DB::table('parameters')->insert([
             'air_quality' => 0,
-            'temperature' => 0,
-            'pressure' => 0,
-            'umidity' => 0,
+            'temperature' => $temp,
+            'pressure' => $pres,
+            'humidity' => $humi,
             'latitude' => $lat,
             'longitude' => $lon,
             'created_at' => now(),

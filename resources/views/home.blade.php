@@ -30,7 +30,7 @@
                     <i class="bi bi-speedometer icon"></i> Pressione: <strong>{{ $s->pressure }} hPa</strong>
                 </li>
                 <li class="list-inline-item">
-                    <i class="bi bi-droplet-half icon"></i> Umidità: <strong>{{ $s->umidity }}%</strong>
+                    <i class="bi bi-droplet-half icon"></i> Umidità: <strong>{{ $s->humidity }}%</strong>
                 </li>
             </ul>
         </div>
