@@ -21,7 +21,6 @@ Route::post('/esp-data', function (Request $request) {
 
     if ($lat && $lon && $temp && $pres && $humi) {
         DB::table('parameters')->insert([
-            'air_quality' => 0,
             'temperature' => $temp,
             'pressure' => $pres,
             'humidity' => $humi,

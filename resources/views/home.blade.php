@@ -21,9 +21,6 @@
             </h5>
             <ul class="list-inline mb-0 d-flex flex-wrap gap-4 justify-content-start">
                 <li class="list-inline-item">
-                    <i class="bi bi-wind icon"></i> Qualità Aria: <strong>{{ $s->air_quality }}</strong>
-                </li>
-                <li class="list-inline-item">
                     <i class="bi bi-thermometer-half icon"></i> Temperatura: <strong>{{ $s->temperature }}°C</strong>
                 </li>
                 <li class="list-inline-item">
