@@ -29,6 +29,9 @@
                 <li class="list-inline-item">
                     <i class="bi bi-droplet-half icon"></i> Umidità: <strong>{{ $s->humidity }}%</strong>
                 </li>
+                <li class="list-inline-item">
+                    <i class="bi bi-clock icon"></i> Ore: <strong>{{ $s->created_at }}</strong>
+                </li>
             </ul>
         </div>
     @endforeach

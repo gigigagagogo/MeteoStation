@@ -6,8 +6,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 
-Route::get('/', [MeteoController::class, 'param'])->name('param');
-
-
+Route::get('/', [MeteoController::class, 'param']);
 
 ?>
