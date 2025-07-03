@@ -30,7 +30,7 @@ void setup() {
   Wire.begin(21, 22);  // SDA, SCL
   Serial.begin(115200);
   gpsSerial.begin(9600, SERIAL_8N1, 16, 17); // RX = 16, TX = 17
-
+  pinMode(4, INPUT_PULLUP);
   while (Serial.available() > 0) Serial.read();
   while (gpsSerial.available() > 0) gpsSerial.read();
 
@@ -38,9 +38,9 @@ void setup() {
 
   setupWifi();
   setupSensor();
-  //setupSD();
+  setupSD();
   setupLed();
-  //readFile();
+  readFile();
   
   Serial.println("Avvio lettura GPS...");
 }
@@ -53,6 +53,12 @@ void loop() {
     gps.encode(c);
   }
 
+  if (digitalRead(4) == LOW) {  // pulsante premuto (connesso a GND)
+    Serial.println("Pulsante premuto, resetto dati SD...");
+    resetSD();
+    delay(1000); 
+  } 
+  
   Serial.print("Satelliti visibili: ");
   Serial.println(gps.satellites.value());
 
@@ -61,6 +67,7 @@ void loop() {
   // Leggi sempre la temperatura per LED, anche se non invii
   if (bme.performReading()) {
     ultimaTemperatura = bme.temperature;
+    Serial.println(ultimaTemperatura);
     checkLed(ultimaTemperatura); // CHIAMATA CONTINUA
   }
 
@@ -68,9 +75,13 @@ void loop() {
     ultimoInvio = millis();
 
     // Se ci sono nuove coordinate valide
-    if (gps.location.isUpdated() && bme.performReading()) {
-      double lat = gps.location.lat();
-      double lon = gps.location.lng();
+    if (bme.performReading()) {
+      double lat = 0.0;
+      double lon = 0.0;
+      if (gps.location.isValid()) {
+        lat = gps.location.lat();
+        lon = gps.location.lng();
+      }
       double temp = bme.temperature;
       double pres = bme.pressure / 100.0;
       double humi = bme.humidity;
@@ -101,19 +112,38 @@ void loop() {
 
 void salvaSD(double lat, double lon, double temp, double pres, double humi){
   Serial.println("Wifi non presente/Errore POST, procedo con la scrittura dei dati sull'SD!");
-  File fl = SD.open("gps_data.txt", FILE_WRITE);
-  if(fl) {
-    fl.println("Latitudine: " + String(lat)
-              + ", Longitudine: " + String(lon)
-              + ", Temperatura: " + String(temp)
-              + ", Pressione: " + String(pres)
-              + ", Umidità: " + String(humi)
-              );
-    fl.flush();
-    fl.close();
-    Serial.println("Scrittura su SD avvenuta con successo!");
+  
+  File fl = SD.open("/gps_data.txt", FILE_WRITE);
+  if(!fl) {
+    Serial.println("Errore apertura file gps_data.txt");
+    return;
+  }
+  Serial.println("File aperto, scrittura in corso...");
+  fl.println("Latitudine: " + String(lat)
+            + ", Longitudine: " + String(lon)
+            + ", Temperatura: " + String(temp)
+            + ", Pressione: " + String(pres)
+            + ", Umidità: " + String(humi)
+            );
+  fl.flush();
+  fl.close();
+  Serial.println("Scrittura su SD avvenuta con successo!");
+}
+
+void resetSD() {
+  if (SD.exists("/gps_data.txt")) {
+    SD.remove("/gps_data.txt");
+    Serial.println("File gps_data.txt eliminato dalla SD!");
   } else {
-    Serial.println("Errore apertura file");
+    Serial.println("Nessun file da eliminare.");
+  }
+
+  File fl = SD.open("/gps_data.txt", FILE_WRITE);
+  if (fl) {
+    fl.close();
+    Serial.println("File vuoto ricreato dopo il reset.");
+  } else {
+    Serial.println("Errore nella creazione del file vuoto.");
   }
 }
 
@@ -155,15 +185,22 @@ void setupSD() {
 }
 
 void readFile() {
-  File fl = SD.open("gps_data.txt");
-  if(fl) {
+  Serial.println("Avvio lettura dati vecchi su Scheda SD!");
+  delay(1000);
+  File fl = SD.open("/gps_data.txt");
+  if (fl) {
     Serial.println("File aperto");
-    while(fl.available()) {
-      Serial.println(fl.read());
+    while (fl.available()) {
+      String line = fl.readStringUntil('\n');
+      Serial.println(line);
     }
     fl.close();
+  } else {
+    Serial.println("Errore apertura file gps_data.txt");
   }
 }
+
+
 void setupLed() {
   pinMode(15, OUTPUT); // ROSSO
   pinMode(2, OUTPUT); // GIALLO
