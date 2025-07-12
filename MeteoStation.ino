@@ -1,11 +1,3 @@
-/*
-
-$GPGSV,<total_msgs>,<msg_number>,<sat_in_view>,
-<sat1_prn>,<elv1>,<az1>,<snr1>,
-<sat2_prn>,<elv2>,<az2>,<snr2>,...
-
-.*/
-
 #include <TinyGPS++.h>
 #include <HardwareSerial.h>
 #include <WiFi.h>
@@ -17,11 +9,16 @@ $GPGSV,<total_msgs>,<msg_number>,<sat_in_view>,
 #include <SD.h>
 #include <FS.h>
 
+// WiFi
 const char *ssid = "Redmi";
 const char *pass = "prova123";
+
+// Timer
 unsigned long ultimoInvio = 0;
-const unsigned long intervallo = 30000;
-unsigned long startTime = millis();
+const unsigned long intervallo = 30000; // invia dati ogni 30 secondi
+unsigned long startTime = millis(); // tempo iniziale
+
+// Sensori
 Adafruit_BME680 bme;
 TinyGPSPlus gps;
 HardwareSerial gpsSerial(1);  // UART1 su pin 16 (RX) e 17 (TX)
@@ -30,22 +27,25 @@ void setup() {
   Wire.begin(21, 22);  // SDA, SCL
   Serial.begin(115200);
   gpsSerial.begin(9600, SERIAL_8N1, 16, 17); // RX = 16, TX = 17
-  pinMode(4, INPUT_PULLUP);
+  pinMode(4, INPUT_PULLUP); // Pulsante con pull-up interno
+  setupLed();
+
+  // Pulizia buffer seriali 
   while (Serial.available() > 0) Serial.read();
   while (gpsSerial.available() > 0) gpsSerial.read();
 
   Serial.println();
 
-  setupWifi();
+  setupWifi(); 
   setupSensor();
   setupSD();
-  setupLed();
   readFile();
   
   Serial.println("Avvio lettura GPS...");
 }
 
 void loop() {
+
   // Leggo i caratteri in arrivo dal GPS
 
   while (gpsSerial.available() > 0) {
@@ -53,6 +53,7 @@ void loop() {
     gps.encode(c);
   }
 
+  // Reset dati quando premi il pulsante
   if (digitalRead(4) == LOW) {  // pulsante premuto (connesso a GND)
     Serial.println("Pulsante premuto, resetto dati SD...");
     resetSD();
@@ -64,13 +65,14 @@ void loop() {
 
   static double ultimaTemperatura = 0; // valore persistente
 
-  // Leggi sempre la temperatura per LED, anche se non invii
+  // Leggi sempre la temperatura per LED
   if (bme.performReading()) {
     ultimaTemperatura = bme.temperature;
     Serial.println(ultimaTemperatura);
-    checkLed(ultimaTemperatura); // CHIAMATA CONTINUA
+    checkLed(ultimaTemperatura); // Aggiorna il LED in base alla temperatura
   }
 
+  // Invio dati ogni 30 secondi
   if(millis() - ultimoInvio >= intervallo) {
     ultimoInvio = millis();
 
@@ -81,13 +83,18 @@ void loop() {
       if (gps.location.isValid()) {
         lat = gps.location.lat();
         lon = gps.location.lng();
+      } else {
+        Serial.println("Non ci sono abbastanza satelliti disponibili, imposto latitudine e longitudine di default");
       }
+      
       double temp = bme.temperature;
       double pres = bme.pressure / 100.0;
       double humi = bme.humidity;
+
+      // Invio dati al server o salvo su SD
       if (WiFi.status() == WL_CONNECTED) {
         HTTPClient http;
-        http.begin("http://192.168.167.244:8000/api/esp-data");
+        http.begin("http://10.74.159.244:8000/api/esp-data");
         http.addHeader("Content-Type", "application/x-www-form-urlencoded");
         http.setTimeout(3000);
         String dati = "lat=" + String(lat, 6) + "&lon=" + String(lon, 6) + "&temp=" + String(temp) + "&pres=" + String(pres) + "&humi=" + String(humi);
@@ -110,10 +117,11 @@ void loop() {
   }
 }
 
+// salva dati su SD 
 void salvaSD(double lat, double lon, double temp, double pres, double humi){
   Serial.println("Wifi non presente/Errore POST, procedo con la scrittura dei dati sull'SD!");
   
-  File fl = SD.open("/gps_data.txt", FILE_WRITE);
+  File fl = SD.open("/gps_data.txt", FILE_APPEND);
   if(!fl) {
     Serial.println("Errore apertura file gps_data.txt");
     return;
@@ -130,6 +138,7 @@ void salvaSD(double lat, double lon, double temp, double pres, double humi){
   Serial.println("Scrittura su SD avvenuta con successo!");
 }
 
+// resetta dati presenti su SD
 void resetSD() {
   if (SD.exists("/gps_data.txt")) {
     SD.remove("/gps_data.txt");
@@ -147,6 +156,7 @@ void resetSD() {
   }
 }
 
+// setup per connessione al wifi/passaggio in modalita salvataggio su SD
 void setupWifi() {
   WiFi.begin(ssid, pass);
   while (WiFi.status() != WL_CONNECTED && millis() - startTime < 10000 ) {
@@ -163,6 +173,7 @@ void setupWifi() {
     }
 }
 
+// setup BME688 sensor
 void setupSensor() {
   if(!bme.begin(0x76, &Wire)) {
       Serial.println("Sensore BME688 non trovata");
@@ -171,11 +182,13 @@ void setupSensor() {
     
   Serial.println("Sensore BME688 collegato");
 
+  // parametri per la precisione dei dati
   bme.setTemperatureOversampling(BME680_OS_16X);
   bme.setPressureOversampling(BME680_OS_4X);
   bme.setHumidityOversampling(BME680_OS_4X);
 }
 
+// setup per SD
 void setupSD() {
   if (!SD.begin(5)) {
     Serial.println("Scheda SD non trovata");
@@ -184,23 +197,27 @@ void setupSD() {
   Serial.println("Scheda SD collegata");
 }
 
+// lettura da file
 void readFile() {
   Serial.println("Avvio lettura dati vecchi su Scheda SD!");
-  delay(1000);
-  File fl = SD.open("/gps_data.txt");
-  if (fl) {
-    Serial.println("File aperto");
-    while (fl.available()) {
-      String line = fl.readStringUntil('\n');
-      Serial.println(line);
-    }
-    fl.close();
-  } else {
+  File fl = SD.open("/gps_data.txt", FILE_READ);
+  
+  if (!fl) {
     Serial.println("Errore apertura file gps_data.txt");
+    return;
   }
+
+  Serial.println("File aperto, contenuto:");
+  while (fl.available()) {
+    String riga = fl.readStringUntil('\n');
+    riga.trim();  // Rimuove eventuali \r\n residui
+    Serial.println(riga);
+  }
+  fl.close();
 }
 
 
+// setup iniziale dei LED
 void setupLed() {
   pinMode(15, OUTPUT); // ROSSO
   pinMode(2, OUTPUT); // GIALLO
@@ -220,11 +237,16 @@ void checkLed(double temp) {
     lastBlink = now;
     ledState = !ledState;    
 
+    // ROSSO: allarme
     if (temp >= 34 || temp < -2) {
       digitalWrite(15, ledState);
-    } else if((temp >= -2 && temp <= 10) || (temp >= 28 && temp < 34)){
+    } 
+    // GIALLO: attenzione
+    else if((temp >= -2 && temp <= 10) || (temp >= 28 && temp < 34)){
       digitalWrite(2, ledState);
-    } else {
+    }
+    // VERDE: tutto ok
+    else {
       digitalWrite(0, ledState);
     }
   }

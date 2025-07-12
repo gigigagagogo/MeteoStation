@@ -19,7 +19,7 @@ Route::post('/esp-data', function (Request $request) {
     $pres = $request->input('pres');
     $humi = $request->input('humi');
 
-    if ($lat && $lon && $temp && $pres && $humi) {
+    if (!is_null($lat) && !is_null($lon) && !is_null($temp) && !is_null($pres) && !is_null($humi)) {
         DB::table('parameters')->insert([
             'temperature' => $temp,
             'pressure' => $pres,
