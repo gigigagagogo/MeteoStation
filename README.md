@@ -1,10 +1,10 @@
-# 🌦️ IoT Weather Station
+# 🌦️ WeatherStation
 
 ## Introduzione
 
-**IoT Weather Station** è un progetto di monitoraggio ambientale basato su **ESP32**, progettato per raccogliere e trasmettere dati meteorologici (temperatura, umidità, pressione atmosferica) e geolocalizzazione (GPS). I dati vengono inviati via Wi-Fi a un server remoto, dove possono essere visualizzati in tempo reale attraverso un’interfaccia web.
+**Weather Station** è un progetto di monitoraggio ambientale basato su **ESP32**, progettato per raccogliere e trasmettere dati meteorologici (temperatura, umidità, pressione atmosferica) e geolocalizzazione (GPS). I dati vengono inviati via Wi-Fi a un server, dove possono essere visualizzati in tempo reale attraverso un’interfaccia web.
 
-Il progetto è stato sviluppato nell’ambito del corso ITS in ambito IoT, con l'obiettivo di integrare competenze di elettronica, programmazione embedded, comunicazione wireless e visualizzazione dati.
+Il progetto è stato sviluppato per il corso di Elettronica Generale, con l'obiettivo di integrare competenze di elettronica, programmazione embedded, comunicazione wireless e visualizzazione dati.
 
 ---
 
@@ -28,7 +28,7 @@ Il progetto è stato sviluppato nell’ambito del corso ITS in ambito IoT, con l
 | Modulo GPS NEO-6M        | Modulo per tracciamento posizione      |
 | Adattatore microSD       | Per salvataggio dati su memoria locale |
 | LED + resistenze         | Indicatori di stato                    |
-| Pulsante                 | Attivazione/controllo funzioni         |
+| Pulsante                 | Reset dati MicroSD                     |
 | Breadboard e cavetti     | Cablaggio prototipale                  |
 
 ---
@@ -44,15 +44,12 @@ Il progetto è stato sviluppato nell’ambito del corso ITS in ambito IoT, con l
 
 ## 🛠️ Tecnologie
 
-- **Embedded**: C++ su ESP32
-- **Sensoristica**: BME688, GPS NEO-6M
+- **Sensoristica**: BME688 (I2C), GPS NEO-6M (UART)
 - **Reti**: Wi-Fi 2.4 GHz
-- **Web**: PHP, HTML, CSS (Bootstrap), MySQL
+- **Web**: Laravel, HTML, CSS (Bootstrap), MySQL
 - **Hardware prototipale**: Breadboard, LED, pulsanti
 - **Storage locale**: microSD (SPI)
 
 ---
-
-## 📷 Galleria
 
 *Aggiungi qui qualche foto del circuito montato e della dashboard web in azione, per dare credibilità visiva al progetto.*
