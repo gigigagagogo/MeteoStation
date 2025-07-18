@@ -52,4 +52,3 @@ Il progetto è stato sviluppato per il corso di Elettronica Generale, con l'obie
 
 ---
 
-*Aggiungi qui qualche foto del circuito montato e della dashboard web in azione, per dare credibilità visiva al progetto.*
